@@ -26,7 +26,14 @@ Anti-laziness hardening is part of the method: model essays without claim
 cards, summary-only notes, decorative indexes, skipped lens obligations, and
 self-certified completion are review findings, not acceptable output.
 
-## Install
+## Quick Install
+
+Book Reader has two installation layers:
+
+- Python runtime dependencies for helper scripts.
+- Agent skills for OpenCode / Codex / generic agent-compatible skill layouts.
+
+### Install Python runtime dependencies
 
 Python 3.10+ is required.
 
@@ -42,6 +49,37 @@ Dependencies include EPUB/PDF extraction support:
 - `beautifulsoup4`
 - `lxml`
 - `pypdf`
+
+### Install agent skills
+
+OpenCode global install:
+
+```bash
+python3 scripts/install_skills.py --target opencode-global
+```
+
+OpenCode project-local install:
+
+```bash
+python3 scripts/install_skills.py --target opencode-project --project /path/to/project
+```
+
+Generic agent-compatible global install:
+
+```bash
+python3 scripts/install_skills.py --target agents-global
+```
+
+Generic project-local install:
+
+```bash
+python3 scripts/install_skills.py --target agents-project --project /path/to/project
+```
+
+By default the installer copies skill packages. Use `--mode symlink` for
+development installs and `--dry-run` to preview without writing.
+
+See `docs/INSTALL.md` for full install, verify, and uninstall instructions.
 
 ## Intake CLI
 

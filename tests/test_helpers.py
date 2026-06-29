@@ -13,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills" / "book-intake" / "scripts"
+INSTALL_SCRIPT = ROOT / "scripts" / "install_skills.py"
 sys.path.insert(0, str(SCRIPTS))
 from language import detect_language  # noqa: E402
 
@@ -451,6 +452,98 @@ The prose says decision-relevant evidence matters.
         self.assertIn("What Would Resolve This:", unit_note)
         self.assertIn("coverage-level", unit_note)
 
+    def test_install_script_discovers_expected_skills_flattened(self) -> None:
+        installer = self.load_install_module()
+
+        skills = installer.discover_skills(ROOT)
+        names = [skill.name for skill in skills]
+
+        self.assertIn("book-reader", names)
+        self.assertIn("book-intake", names)
+        self.assertIn("book-reconstruct", names)
+        self.assertIn("book-reviewer", names)
+        self.assertIn("book-revise", names)
+        self.assertIn("technical-book", names)
+        self.assertIn("fiction-narrative", names)
+        self.assertNotIn("lenses", names)
+        for skill in skills:
+            self.assertEqual(skill.path.name, skill.name)
+            self.assertTrue((skill.path / "SKILL.md").is_file())
+            self.assertNotIn("books", skill.path.parts)
+            self.assertNotIn("workspaces", skill.path.parts)
+
+    def test_install_script_resolves_project_targets(self) -> None:
+        installer = self.load_install_module()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            project = Path(temporary_directory) / "project"
+
+            self.assertEqual(
+                installer.resolve_target_directory("opencode-project", project),
+                project / ".opencode" / "skills",
+            )
+            self.assertEqual(
+                installer.resolve_target_directory("agents-project", project),
+                project / ".agents" / "skills",
+            )
+
+    def test_install_script_dry_run_does_not_write(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(INSTALL_SCRIPT),
+                "--target",
+                "opencode-project",
+                "--project",
+                tempfile.gettempdir(),
+                "--dry-run",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("DRY RUN", result.stdout)
+        self.assertIn("book-reader", result.stdout)
+        self.assertIn("technical-book", result.stdout)
+
+    def test_install_script_installs_copy_and_refuses_overwrite_without_force(self) -> None:
+        installer = self.load_install_module()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            project = Path(temporary_directory) / "project"
+            target = installer.resolve_target_directory("agents-project", project)
+            skills = [skill for skill in installer.discover_skills(ROOT) if skill.name in {"book-reader", "technical-book"}]
+
+            first = installer.install_skills(skills, target, mode="copy", force=False, dry_run=False)
+            second = installer.install_skills(skills, target, mode="copy", force=False, dry_run=False)
+            forced = installer.install_skills(skills, target, mode="copy", force=True, dry_run=False)
+
+            self.assertEqual(first.installed, 2)
+            self.assertEqual(first.skipped, 0)
+            self.assertEqual(second.installed, 0)
+            self.assertEqual(second.skipped, 2)
+            self.assertEqual(forced.installed, 2)
+            self.assertTrue((target / "book-reader" / "SKILL.md").is_file())
+            self.assertTrue((target / "technical-book" / "SKILL.md").is_file())
+            self.assertFalse((target / "lenses" / "technical-book").exists())
+
+    def test_install_script_symlink_mode_creates_skill_symlink(self) -> None:
+        installer = self.load_install_module()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            project = Path(temporary_directory) / "project"
+            target = installer.resolve_target_directory("opencode-project", project)
+            skills = [skill for skill in installer.discover_skills(ROOT) if skill.name == "book-reader"]
+
+            result = installer.install_skills(skills, target, mode="symlink", force=False, dry_run=False)
+
+            self.assertEqual(result.installed, 1)
+            self.assertTrue((target / "book-reader").is_symlink())
+            self.assertTrue((target / "book-reader" / "SKILL.md").is_file())
+
     def assert_source_map_has_block_items(self, source_map: dict, kind: str) -> None:
         block_items = [item for item in source_map["items"] if item.get("kind") == kind]
         self.assertGreaterEqual(len(block_items), 1)
@@ -477,6 +570,15 @@ The prose says decision-relevant evidence matters.
         (workspace / "README.md").write_text(readme, encoding="utf-8")
         dashboard = (workspace / "guide" / "dashboard.md").read_text("utf-8").replace("workspace stage: source-ready", "workspace stage: reconstructed")
         (workspace / "guide" / "dashboard.md").write_text(dashboard, encoding="utf-8")
+
+    def load_install_module(self):
+        spec = importlib.util.spec_from_file_location("install_skills", INSTALL_SCRIPT)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["install_skills"] = module
+        spec.loader.exec_module(module)
+        return module
 
 
 if __name__ == "__main__":
