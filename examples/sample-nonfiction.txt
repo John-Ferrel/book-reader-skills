@@ -1,0 +1,9 @@
+# A Small Argument
+
+People often mistake more information for better judgment. The problem is not
+scarcity alone but deciding which evidence changes a decision.
+
+An example of a crowded dashboard shows why a reader needs a sequence: first
+identify the decision, then compare only the information that bears on it.
+
+This short text is a sample source, not an authoritative book.

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "book-reader-skills-v2"
+version = "0.1.0"
+description = "Runtime helpers for evidence-linked book reconstruction workspaces"
+requires-python = ">=3.10"
+dependencies = [
+  "beautifulsoup4>=4.12",
+  "ebooklib>=0.18",
+  "lxml>=4.9",
+  "pypdf>=4.0",
+]
+
+[tool.setuptools]
+packages = []
