@@ -10,6 +10,8 @@ Output file: `revisions/revision-log-round-<n>.md`
 - Files changed:
 - Evidence inspected:
 - Source blocks re-read:
+- Note items re-read:
+- Substantive inference changes:
 - Note items revised or added:
 - Prior claim status: preserved / revised / superseded
 - New or revised claim:

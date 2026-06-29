@@ -47,6 +47,7 @@ Check and report:
 11. Fiction lens skipped characters / arcs / motifs when needed.
 12. External context polluted source-supported model.
 13. Review/revision loop was bypassed.
+14. Revision avoided source re-reading and only changed formatting.
 
 ## Artifact Redundancy Audit
 

@@ -22,6 +22,10 @@ intake -> reconstruct -> self-check -> independent review -> revise -> verificat
 The workspace is not complete after reconstruction alone. A fresh independent
 review is required before stability can be claimed.
 
+Anti-laziness hardening is part of the method: model essays without claim
+cards, summary-only notes, decorative indexes, skipped lens obligations, and
+self-certified completion are review findings, not acceptable output.
+
 ## Install
 
 Python 3.10+ is required.
@@ -109,6 +113,11 @@ Every important model claim should cite:
 
 Model files use claim cards. Essay-only model prose should be flagged in
 review.
+
+Strict validation catches mechanical laziness such as active model files
+without claim cards, missing claim-card fields, note files without note item
+IDs, template-only indexes, self-audit treated as stable, and README/dashboard
+state mismatch. Reviewer catches semantic laziness.
 
 Artifacts are views over thinking, not boxes to fill. If an artifact does not
 improve reconstruction, omit it or mark it deferred/blocked/not-applicable with

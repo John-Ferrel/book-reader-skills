@@ -8,6 +8,7 @@ Read these references:
 - `references/reconstruction-model.md`
 - `references/knowledge-organization.md`
 - `references/continuation-planning.md`
+- `references/anti-laziness-obligations.md`
 
 Workflow:
 
@@ -20,3 +21,6 @@ Workflow:
 6. Build useful indexes or explicitly defer/block/mark not-applicable.
 7. Build guide and continuation plan.
 8. Self-audit traceability before reporting state.
+
+Do not claim completion without independent review. If reconstruction is done
+but review has not run, report `review-required`.

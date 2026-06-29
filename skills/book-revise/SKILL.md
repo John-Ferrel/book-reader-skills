@@ -15,6 +15,12 @@ Responsibilities:
 - update `workspace.json` to `workspace_stage: revised`,
   `revision_status: applied`, and `current_required_action: run-verify`
 
+Forbidden:
+
+- only add Evidence/Confidence wording without rereading source
+- change formatting without changing unsupported inference
+- claim stable after review fail
+
 Reviewer and reviser are separate roles.
 
 Read `references/revision-protocol.md`.

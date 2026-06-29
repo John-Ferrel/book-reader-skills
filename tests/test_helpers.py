@@ -232,6 +232,113 @@ class HelperRuntimeTests(unittest.TestCase):
             self.assertNotEqual(strict.returncode, 0)
             self.assertIn("README stage does not match workspace.json", strict.stdout + strict.stderr)
 
+    def test_strict_validator_catches_essay_only_active_model(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            source = directory / "book.txt"
+            workspace = directory / "workspace"
+            source.write_text("# Book\n\nReadable source text.", encoding="utf-8")
+            self.assertEqual(self.ingest(source, workspace).returncode, 0)
+            self.mark_reconstructed(workspace)
+            (workspace / "model" / "author-problem.md").write_text(
+                "# Author Problem\n\nStatus: active\n\nThe author is clearly trying to solve a reader confusion problem with a careful sequence.\n",
+                encoding="utf-8",
+            )
+
+            result = self.run_cli("validate", "--workspace", str(workspace), "--strict")
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("active model file missing claim card", result.stdout + result.stderr)
+
+    def test_strict_validator_catches_active_model_missing_required_claim_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            source = directory / "book.txt"
+            workspace = directory / "workspace"
+            source.write_text("# Book\n\nReadable source text.", encoding="utf-8")
+            self.assertEqual(self.ingest(source, workspace).returncode, 0)
+            self.mark_reconstructed(workspace)
+            (workspace / "model" / "author-problem.md").write_text(
+                """# Author Problem
+
+Status: active
+
+## Claim: The book frames better judgment as evidence selection.
+
+Claim ID: model-author-problem-001
+Type: inference
+Status: active
+
+Reasoning:
+The prose says decision-relevant evidence matters.
+""",
+                encoding="utf-8",
+            )
+
+            result = self.run_cli("validate", "--workspace", str(workspace), "--strict")
+
+            self.assertNotEqual(result.returncode, 0)
+            output = result.stdout + result.stderr
+            self.assertIn("missing required claim-card field Evidence", output)
+            self.assertIn("missing required claim-card field Confidence", output)
+            self.assertIn("missing required claim-card field Alternative Interpretation", output)
+
+    def test_strict_validator_does_not_treat_self_audit_as_independent_review(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            source = directory / "book.txt"
+            workspace = directory / "workspace"
+            source.write_text("# Book\n\nReadable source text.", encoding="utf-8")
+            self.assertEqual(self.ingest(source, workspace).returncode, 0)
+            manifest_path = workspace / "workspace.json"
+            manifest = json.loads(manifest_path.read_text("utf-8"))
+            manifest["workspace_stage"] = "stable"
+            manifest["review_status"] = "self-checked"
+            manifest["stability_status"] = "stable"
+            manifest["current_required_action"] = "none"
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+            readme = (workspace / "README.md").read_text("utf-8").replace("workspace stage: source-ready", "workspace stage: stable")
+            (workspace / "README.md").write_text(readme, encoding="utf-8")
+            dashboard = (workspace / "guide" / "dashboard.md").read_text("utf-8").replace("workspace stage: source-ready", "workspace stage: stable")
+            (workspace / "guide" / "dashboard.md").write_text(dashboard, encoding="utf-8")
+
+            result = self.run_cli("validate", "--workspace", str(workspace), "--strict")
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("self-audit is not independent review", result.stdout + result.stderr)
+
+    def test_strict_validator_reports_readme_only_optional_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            source = directory / "book.txt"
+            workspace = directory / "workspace"
+            source.write_text("# Book\n\nReadable source text.", encoding="utf-8")
+            self.assertEqual(self.ingest(source, workspace).returncode, 0)
+            optional = workspace / "optional-map"
+            optional.mkdir()
+            (optional / "README.md").write_text("# Optional Map\n\nPurpose: possible future map.\n", encoding="utf-8")
+
+            result = self.run_cli("validate", "--workspace", str(workspace), "--strict")
+            report = (workspace / "reports" / "validation-report.md").read_text("utf-8")
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("README-only optional directory", report)
+
+    def test_strict_validator_catches_note_summary_without_note_items(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            source = directory / "book.txt"
+            workspace = directory / "workspace"
+            source.write_text("# Book\n\nReadable source text.", encoding="utf-8")
+            self.assertEqual(self.ingest(source, workspace).returncode, 0)
+            note = workspace / "notes" / "unit-notes" / "unit-001.md"
+            note.write_text("# Unit 1\n\nThis chapter says useful things about evidence and judgment.\n", encoding="utf-8")
+
+            result = self.run_cli("validate", "--workspace", str(workspace), "--strict")
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("note file has no note item IDs", result.stdout + result.stderr)
+
     @unittest.skipUnless(importlib.util.find_spec("ebooklib"), "ebooklib is not installed")
     def test_epub_ingest_extracts_spine_metadata_and_source_map(self) -> None:
         from ebooklib import epub
@@ -310,6 +417,8 @@ class HelperRuntimeTests(unittest.TestCase):
         self.assertIn("Next Required Action", review_template)
         self.assertIn("revision-plan-round", revision_plan)
         self.assertIn("revision-log-round", revision_log)
+        self.assertIn("re-read", revision_log.lower())
+        self.assertIn("Source blocks re-read", revision_log)
 
     def test_model_templates_use_claim_card_structure(self) -> None:
         model_directory = ROOT / "skills" / "book-reconstruct" / "templates" / "model"
@@ -330,6 +439,18 @@ class HelperRuntimeTests(unittest.TestCase):
             for marker in required_markers:
                 self.assertIn(marker, content, f"{model_template} missing {marker}")
 
+    def test_note_templates_define_minimum_note_item_fields(self) -> None:
+        unit_note = (ROOT / "skills" / "book-reconstruct" / "templates" / "notes" / "unit-note.md").read_text("utf-8")
+        deep_note = (ROOT / "skills" / "book-reconstruct" / "templates" / "notes" / "deep-note.md").read_text("utf-8")
+        for content in (unit_note, deep_note):
+            self.assertIn("Type:", content)
+            self.assertIn("Source:", content)
+            self.assertIn("Confidence:", content)
+            self.assertIn("Content:", content)
+        self.assertIn("What Would Change This:", unit_note)
+        self.assertIn("What Would Resolve This:", unit_note)
+        self.assertIn("coverage-level", unit_note)
+
     def assert_source_map_has_block_items(self, source_map: dict, kind: str) -> None:
         block_items = [item for item in source_map["items"] if item.get("kind") == kind]
         self.assertGreaterEqual(len(block_items), 1)
@@ -344,6 +465,18 @@ class HelperRuntimeTests(unittest.TestCase):
     def assert_unique_source_map_ids(self, source_map: dict) -> None:
         ids = [item["id"] for item in source_map["items"]]
         self.assertEqual(len(ids), len(set(ids)))
+
+    def mark_reconstructed(self, workspace: Path) -> None:
+        manifest_path = workspace / "workspace.json"
+        manifest = json.loads(manifest_path.read_text("utf-8"))
+        manifest["workspace_stage"] = "reconstructed"
+        manifest["review_status"] = "self-checked"
+        manifest["current_required_action"] = "run-review"
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+        readme = (workspace / "README.md").read_text("utf-8").replace("workspace stage: source-ready", "workspace stage: reconstructed")
+        (workspace / "README.md").write_text(readme, encoding="utf-8")
+        dashboard = (workspace / "guide" / "dashboard.md").read_text("utf-8").replace("workspace stage: source-ready", "workspace stage: reconstructed")
+        (workspace / "guide" / "dashboard.md").write_text(dashboard, encoding="utf-8")
 
 
 if __name__ == "__main__":

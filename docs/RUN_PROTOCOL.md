@@ -95,3 +95,23 @@ Next required action: run book-reviewer in a fresh session.
 
 Self-check is allowed in single-agent fallback, but status remains
 `self-checked`, not independently reviewed or stable.
+
+## Stable condition
+
+Mark `stable` only when:
+
+- latest independent review is pass or acceptable warning
+- no unresolved high severity issues remain
+- revision-required = no
+- workspace state is consistent
+- the same high severity issue is not repeated across rounds
+
+## Max rounds reached
+
+Mark `max-rounds-reached` only when:
+
+- `review_round >= max_review_rounds`
+- review still has unresolved fail/warning findings
+- workspace does not claim stable
+
+Max rounds reached is an honest stop condition, not success.

@@ -11,6 +11,7 @@ Unit ID: ru-000-human-readable-slug
 Type: observation
 Source: src-000-b000
 Confidence: high
+Content:
 
 [Write only what is directly observable in the source block.]
 
@@ -21,6 +22,7 @@ Confidence: high
 Type: paraphrase
 Source: src-000-b000
 Confidence: high
+Content:
 
 [Restate the source faithfully without adding interpretation.]
 
@@ -34,6 +36,9 @@ Sources:
 Confidence: high / medium / low / source-limited
 Alternative:
 - [Credible alternative interpretation.]
+What Would Change This:
+- [Evidence that would revise this inference.]
+Content:
 
 [Qualified inference based on the cited source blocks.]
 
@@ -43,8 +48,10 @@ Alternative:
 
 Type: uncertainty
 Source: source-limited / src-000-b000
-What-would-resolve:
+Confidence: source-limited
+What Would Resolve This:
 - [Source block, later unit, external context, or edition evidence that would settle this.]
+Content:
 
 ## Questions
 
@@ -52,6 +59,8 @@ What-would-resolve:
 
 Type: question
 Source: source-limited / src-000-b000
+Confidence: source-limited
+Content:
 
 [Question to carry forward.]
 
@@ -63,8 +72,17 @@ Type: external-context
 Source: source-limited
 External source:
 Confidence: low / source-limited
+Content:
 
 [Use only when outside context is explicitly needed and labelled.]
+
+## Coverage-Level Note Allowed Only With Honesty
+
+coverage-level: yes / no
+deep-read: yes / no
+
+If this file is only coverage-level, do not present it as deep reading or final
+reconstruction evidence.
 
 ## Links to reconstruction model
 

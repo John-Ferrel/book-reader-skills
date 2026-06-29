@@ -20,3 +20,10 @@ Next required action: run book-reviewer in a fresh session.
 Ideal mode uses separate reader, reviewer, and reviser sessions. Single-agent
 fallback may self-check, but self-check never equals independent review and
 never marks stable.
+
+Stable requires latest independent review pass or acceptable warning, no
+unresolved high severity issues, no required revision, consistent state, and no
+repeated high severity issue across rounds.
+
+If `review_round >= max_review_rounds` and fail/warning remains, mark
+`max-rounds-reached`, not stable.

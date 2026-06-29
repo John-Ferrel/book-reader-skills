@@ -12,6 +12,7 @@ Deep Note ID: deep-ru-000-001
 Type: observation
 Source: src-000-b000
 Confidence: high
+Content:
 
 ## Interpretation
 
@@ -23,6 +24,9 @@ Sources:
 Confidence: high / medium / low / source-limited
 Alternative:
 - [Credible counter-reading.]
+What Would Change This:
+- [Evidence that would revise this interpretation.]
+Content:
 
 ## Counter-reading or alternative
 
@@ -37,5 +41,7 @@ Alternative:
 
 Type: uncertainty
 Source: source-limited / src-000-b000
-What-would-resolve:
+Confidence: source-limited
+What Would Resolve This:
 - [Evidence needed.]
+Content:

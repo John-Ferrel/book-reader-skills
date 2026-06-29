@@ -14,6 +14,7 @@ explicitly requests repair mode.
 Read:
 
 - `references/inference-discipline-audit.md`
+- `references/anti-laziness-audit.md`
 - `references/reviewer-boundary.md`
 
 Reviewer must include artifact redundancy audit, anti-laziness audit,

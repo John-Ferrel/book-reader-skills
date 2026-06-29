@@ -22,3 +22,21 @@ explicitly asks for external checking.
 First reconstruction does not require deep reading every proof. It must not
 pretend derivations, exercises, figures, or tables were understood when they
 were only skimmed, missing, or extraction-limited.
+
+## Anti-laziness minimum
+
+Handle or explicitly defer:
+
+- notation system
+- formal objects
+- definitions
+- theorems / formulas / algorithms
+- dependency graph / prerequisite map
+- examples and what they teach
+- proof / derivation status
+- figures / tables / exercises limitations
+- deep-reading queue
+
+Reviewer should fail technical-book output that is only ordinary chapter
+summary without notation/formal-object/dependency treatment or explicit
+deferral.

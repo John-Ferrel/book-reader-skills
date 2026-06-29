@@ -25,4 +25,7 @@ First reconstruction minimum:
 - figures / tables / exercises limitations labelled
 - deep-reading queue
 
+If any of these cannot be handled in the first pass, mark them explicitly
+deferred with reason. Do not skip them silently.
+
 Read `references/technical-reading.md`.

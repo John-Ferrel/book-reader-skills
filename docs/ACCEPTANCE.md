@@ -61,3 +61,20 @@ python3 skills/book-intake/scripts/book_reader.py info --workspace /tmp/book-rea
 ```
 
 Smoke passing does not prove reconstruction quality.
+
+## v0.1 ready standard
+
+v0.1 ready means:
+
+- runtime intake works for txt/md/epub/text-based pdf
+- method-first skill pack exists
+- core skills and lenses exist
+- evidence discipline is documented
+- review/revise loop is documented
+- anti-laziness audit is documented
+- strict validator catches mechanical laziness
+- reviewer catches semantic laziness
+- tests pass
+
+v0.1 does not guarantee perfect zero-shot book understanding. It guarantees a
+disciplined, reviewable, revisable reading workspace.

@@ -11,6 +11,9 @@ Reviewer boundary: this plan proposes changes but does not apply them outside
 | Priority | Revision | Target files | Evidence / note items to inspect | Required source reread | Expected model change | Done condition |
 | --- | --- | --- | --- | --- | --- | --- |
 
+Do not ask the reviser to merely add labels. Each high/medium issue must name
+the source blocks or note items to re-read.
+
 ## Artifact Actions
 
 | Artifact | Reviewer action | Reason | Done condition |

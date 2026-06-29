@@ -2,6 +2,8 @@
 
 Audit whether the workspace is evidence-driven and revisable.
 
+Use `anti-laziness-audit.md` as a required companion check.
+
 Check:
 
 - model claims cite note items and source blocks

@@ -40,6 +40,32 @@ FORBIDDEN_LEGACY_DIRECTORIES = ("chapters", "reading-passes", "projections")
 ARTIFACT_DIRECTORIES = ("units", "notes", "threads", "model", "indexes", "guide", "review")
 MODEL_TRACEABILITY_MARKERS = ("Evidence", "Confidence", "Alternative")
 TERMINAL_STATUS_VALUES = ("deferred", "blocked", "not-applicable")
+CORE_TOP_LEVEL_ENTRIES = {
+    "README.md",
+    "workspace.json",
+    "source",
+    "evidence",
+    "units",
+    "notes",
+    "threads",
+    "model",
+    "indexes",
+    "guide",
+    "review",
+    "reports",
+    "revisions",
+}
+CLAIM_CARD_FIELDS = (
+    "Claim ID",
+    "Type",
+    "Status",
+    "Confidence",
+    "Evidence",
+    "Reasoning",
+    "Alternative Interpretation",
+    "What Would Change This Model",
+    "Revision History",
+)
 
 
 @dataclass
@@ -168,6 +194,62 @@ def _record_consistency(result: ValidationResult, message: str) -> None:
         result.warnings.append(message)
 
 
+def _document_status(content: str) -> str | None:
+    match = re.search(r"(?im)^Status:\s*([a-z-]+)\s*$", content)
+    return match.group(1).strip().lower() if match else None
+
+
+def _is_terminal_document(content: str) -> bool:
+    status = _document_status(content)
+    return status in TERMINAL_STATUS_VALUES
+
+
+def _check_model_claim_cards(model_path: Path, result: ValidationResult) -> None:
+    content = model_path.read_text(encoding="utf-8")
+    relative = model_path.relative_to(result.workspace)
+    if _is_terminal_document(content):
+        for marker in ("Reason:", "Next Action:"):
+            if marker not in content:
+                result.failed.append(f"terminal model file missing {marker} {relative}")
+        return
+    active_status = _document_status(content) in {"active", "tentative"}
+    if not active_status and not result.strict:
+        return
+    if "## Claim:" not in content:
+        result.failed.append(f"active model file missing claim card: {relative}")
+    for field in CLAIM_CARD_FIELDS:
+        if not re.search(rf"(?im)^{re.escape(field)}\s*:", content):
+            result.failed.append(f"active model file missing required claim-card field {field}: {relative}")
+
+
+def _check_readme_only_optional_dirs(workspace: Path, result: ValidationResult) -> None:
+    for path in sorted(workspace.iterdir()):
+        if path.name in CORE_TOP_LEVEL_ENTRIES or not path.is_dir():
+            continue
+        files = [child for child in path.iterdir() if child.is_file()]
+        dirs = [child for child in path.iterdir() if child.is_dir()]
+        if not dirs and len(files) == 1 and files[0].name == "README.md":
+            result.warnings.append(f"README-only optional directory: {path.name}")
+
+
+def _check_note_item_ids(workspace: Path, result: ValidationResult) -> None:
+    if not result.strict:
+        return
+    note_root = workspace / "notes"
+    if not note_root.is_dir():
+        return
+    item_pattern = re.compile(r"(?im)^###\s+(obs|para|inf|unc|q|ext)-ru-[a-z0-9-]+-\d{3}\s*$")
+    for path in sorted(note_root.rglob("*.md")):
+        if path.name == "README.md":
+            continue
+        content = path.read_text(encoding="utf-8")
+        lowered = content.lower()
+        if "coverage-level: yes" in lowered and "deep-read: no" in lowered:
+            continue
+        if not item_pattern.search(content):
+            result.failed.append(f"note file has no note item IDs: {path.relative_to(workspace)}")
+
+
 def _check_markdown_artifacts(workspace: Path, result: ValidationResult) -> None:
     for directory in ARTIFACT_DIRECTORIES:
         root = workspace / directory
@@ -278,6 +360,10 @@ def validate_workspace(workspace: Path, strict: bool = False) -> ValidationResul
                 _record_consistency(result, "current_required_action is inconsistent with revision_status")
             if manifest.get("workspace_stage") == "source-ready" and manifest.get("current_required_action") != "run-reconstruction":
                 _record_consistency(result, "current_required_action is inconsistent with source-ready stage")
+            if manifest.get("stability_status") == "stable" and manifest.get("review_status") == "self-checked":
+                result.failed.append("self-audit is not independent review")
+            if manifest.get("stability_status") == "stable" and not _review_status_from_latest_report(workspace):
+                result.failed.append("stable workspace requires independent review report")
     source_map_path = workspace / "evidence/source-map.json"
     if source_map_path.is_file():
         source_map = _read_json(source_map_path, "evidence/source-map.json", result)
@@ -319,6 +405,8 @@ def validate_workspace(workspace: Path, strict: bool = False) -> ValidationResul
             result.missing_files.append(f"model/{model_file}")
         else:
             content = model_path.read_text(encoding="utf-8")
+            if result.strict:
+                _check_model_claim_cards(model_path, result)
             for marker in MODEL_TRACEABILITY_MARKERS:
                 if marker not in content:
                     result.failed.append(f"model file missing traceability marker {marker}: model/{model_file}")
@@ -334,6 +422,8 @@ def validate_workspace(workspace: Path, strict: bool = False) -> ValidationResul
                 "(populate it, or mark Status: deferred/blocked/not-applicable with Reason)"
             )
     _check_markdown_artifacts(workspace, result)
+    _check_readme_only_optional_dirs(workspace, result)
+    _check_note_item_ids(workspace, result)
     for forbidden in FORBIDDEN_LEGACY_DIRECTORIES:
         if (workspace / forbidden).exists():
             result.failed.append(f"forbidden legacy directory exists: {forbidden}")

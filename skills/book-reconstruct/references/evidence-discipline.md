@@ -15,9 +15,20 @@ Note item IDs:
 - `q-ru-006-001` question
 - `ext-ru-006-001` external context
 
-Every important note item cites a source block or states `Source:
-source-limited` with a reason. Inferences need confidence and alternative
-interpretation. Uncertainties need `What-would-resolve`.
+Every important note item has ID, Type, Source, Confidence, and Content. It
+cites a source block or states `Source: source-limited` with a reason.
+
+Inference items additionally require Alternative and What Would Change This.
+Uncertainty items additionally require What Would Resolve This.
+
+Coverage-level notes are allowed only when labelled:
+
+```text
+coverage-level: yes
+deep-read: no
+```
+
+They must not be presented as deep reading or final reconstruction evidence.
 
 Do not turn author intention into fact. Write reconstruction claims as
 evidence-linked inferences.
