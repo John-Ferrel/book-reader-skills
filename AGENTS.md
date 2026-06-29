@@ -42,7 +42,12 @@ concept systems, argument architecture, or semantic conclusions.
 
 ## Reviewer and reviser separation
 
-Reviewer writes only:
+Reviewer writes formal round-specific records:
+
+- `review/review-report-round-<n>.md`
+- `review/revision-plan-round-<n>.md`
+
+Reviewer may also update latest convenience copies:
 
 - `review/review-report.md`
 - `review/revision-plan.md`
