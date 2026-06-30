@@ -1,39 +1,83 @@
 # Book Reader Skills v2
 
-Book Reader v2 is a method-first, evidence-driven reading skill pack for
-agents.
+Book Reader Skills is an auditable reading workflow for agents. It organizes a
+whole-book read into an evidence-linked reconstruction workspace that can be
+reviewed, revised, and verified.
 
-It is not a normal summary tool. It is not a parser framework. It is not RAG
-ingestion. Runtime scripts prepare evidence; the reading method reconstructs a
-book’s backend model.
+It is not a normal summary tool. It is not a tool that converts a book into a
+reusable skill. It is not a parser framework or RAG ingestion pipeline. Runtime
+scripts prepare source evidence; agent skills guide the reading workflow.
 
-```text
-source evidence -> note items -> reconstruction model -> inference discipline review -> revision / continuation
-```
-
-Default output is an evidence-linked reconstruction workspace, not a summary.
-
-Default full-read is a loop:
+Core loop:
 
 ```text
-intake -> reconstruct -> self-check -> independent review -> revise -> verification review
+source evidence -> claim cards / note items -> reconstruction model -> independent review -> revision -> verification review
 ```
 
-The workspace is not complete after reconstruction alone. A fresh independent
-review is required before stability can be claimed.
+Default output is a workspace, not a summary. The workspace is not complete
+after reconstruction alone: an independent review and follow-up revision are
+part of the method.
+
+[中文说明](docs/README.zh-CN.md)
 
 Anti-laziness hardening is part of the method: model essays without claim
 cards, summary-only notes, decorative indexes, skipped lens obligations, and
 self-certified completion are review findings, not acceptable output.
 
-## Quick Install
+## Quickstart
+
+Clone the repo:
+
+```bash
+git clone https://github.com/John-Ferrel/book-reader-skills.git
+cd book-reader-skills
+```
+
+Create a virtual environment and install runtime dependencies:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -e .
+```
+
+Run the test suite:
+
+```bash
+python3 -m unittest tests/test_helpers.py -v
+python3 -m py_compile scripts/install_skills.py skills/book-intake/scripts/*.py
+```
+
+Install the agent skills globally for OpenCode:
+
+```bash
+python3 scripts/install_skills.py --target opencode-global
+```
+
+Or install them into a specific OpenCode project:
+
+```bash
+python3 scripts/install_skills.py --target opencode-project --project /path/to/project
+```
+
+Then start a new OpenCode session and ask the agent to use the skills:
+
+```text
+Use book-reader to read examples/sample-nonfiction.txt.
+Use book-intake to ingest examples/sample-nonfiction.txt into a source-ready workspace.
+```
+
+The agent should use the native `skill` tool when `book-reader` or
+`book-intake` appears in OpenCode `available_skills`.
+
+## Install Details
 
 Book Reader has two installation layers:
 
 - Python runtime dependencies for helper scripts.
 - Agent skills for OpenCode / Codex / generic agent-compatible skill layouts.
 
-### Install Python runtime dependencies
+### Python runtime dependencies
 
 Python 3.10+ is required.
 
@@ -50,7 +94,7 @@ Dependencies include EPUB/PDF extraction support:
 - `lxml`
 - `pypdf`
 
-### Install agent skills
+### Agent skills
 
 OpenCode global install:
 
@@ -91,6 +135,32 @@ uses a `name` matching the installed directory, and is not hidden by
 See `docs/INSTALL.md` for full install, native discovery verification,
 troubleshooting, and uninstall instructions.
 
+## Update / Upgrade
+
+For an existing clone:
+
+```bash
+git pull
+. .venv/bin/activate
+pip install -e .
+```
+
+Overwrite an existing OpenCode global skill install:
+
+```bash
+python3 scripts/install_skills.py --target opencode-global --force
+```
+
+Overwrite an existing OpenCode project-local install:
+
+```bash
+python3 scripts/install_skills.py --target opencode-project --project /path/to/project --force
+```
+
+After updating skills, start a new OpenCode session or restart the current one.
+Existing workspaces are not rerun automatically; ask the agent to rerun the
+relevant intake, reconstruction, review, revision, or verification workflow.
+
 ## Intake CLI
 
 Runtime intake lives under `book-intake`:
@@ -126,7 +196,8 @@ images, tables, styling, and some notes may be flattened or lost.
 Use `book-reader` as the orchestrator:
 
 ```text
-用 book-reader 读 examples/input/book.epub
+用 book-reader 读 examples/sample-nonfiction.txt
+用 book-intake ingest examples/sample-nonfiction.txt into a source-ready workspace
 用 technical-book lens 读这本概率论教材
 用 fiction-narrative lens 读这本小说
 用 book-reviewer 审查 workspaces/book-x
@@ -201,7 +272,7 @@ or semantic conclusions.
 
 ```bash
 python3 -m unittest tests/test_helpers.py -v
-python3 -m py_compile skills/book-intake/scripts/*.py
+python3 -m py_compile scripts/install_skills.py skills/book-intake/scripts/*.py
 ```
 
 ## Current limits

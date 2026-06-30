@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run unit tests
+        run: python -m unittest tests/test_helpers.py -v
+
+      - name: Compile key Python scripts
+        run: python -m py_compile scripts/install_skills.py skills/book-intake/scripts/*.py
+
+      - name: Dry-run OpenCode project skill install
+        run: python scripts/install_skills.py --target opencode-project --project /tmp/book-reader-ci --dry-run
