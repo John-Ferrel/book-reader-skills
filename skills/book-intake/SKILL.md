@@ -1,3 +1,8 @@
+---
+name: book-intake
+description: Use when mechanically ingesting a book file into a source-ready Book Reader workspace before semantic reading.
+---
+
 # Book Intake
 
 Use this skill to mechanically prepare a source-ready Book Reader workspace.

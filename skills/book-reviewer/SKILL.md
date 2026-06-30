@@ -1,3 +1,8 @@
+---
+name: book-reviewer
+description: Use to independently audit inference discipline, traceability, and anti-laziness risks in an existing Book Reader workspace.
+---
+
 # Book Reviewer
 
 Use this skill to audit inference discipline in an existing workspace.

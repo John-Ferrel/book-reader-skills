@@ -1,3 +1,8 @@
+---
+name: external-context
+description: Use when the user asks for modern comparison, application, historical bridge, or external source checking alongside the source model.
+---
+
 # External Context Lens
 
 Use when the user asks for modern comparison, application, historical bridge, or

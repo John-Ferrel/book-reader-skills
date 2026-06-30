@@ -1,3 +1,8 @@
+---
+name: book-reconstruct
+description: Use after intake to perform the core evidence-driven reconstruction pass over a source-ready Book Reader workspace.
+---
+
 # Book Reconstruct
 
 Use this skill for the core evidence-driven reading pass after intake.

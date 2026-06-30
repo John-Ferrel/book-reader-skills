@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import sys
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from pathlib import Path
 
 TARGETS = ("opencode-global", "opencode-project", "agents-global", "agents-project")
 MODES = ("copy", "symlink")
+SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 
 @dataclass(frozen=True)
@@ -49,9 +51,68 @@ def discover_skills(repo_root: Path) -> list[SkillPackage]:
         name = package_path.name
         if name in seen:
             raise ValueError(f"duplicate skill name {name!r}: {seen[name]} and {package_path}")
+        skill = SkillPackage(name=name, path=package_path)
+        validate_skill_package(skill)
         seen[name] = package_path
-        packages.append(SkillPackage(name=name, path=package_path))
+        packages.append(skill)
     return packages
+
+
+def parse_skill_frontmatter(skill_file: Path) -> dict[str, str]:
+    if skill_file.name != "SKILL.md":
+        raise ValueError(f"{skill_file}: skill file must be named SKILL.md")
+    if not skill_file.is_file():
+        raise ValueError(f"{skill_file}: SKILL.md not found")
+
+    lines = skill_file.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0] != "---":
+        raise ValueError(f"{skill_file}: SKILL.md must start with YAML frontmatter")
+
+    metadata: dict[str, str] = {}
+    closing_index: int | None = None
+    for index, line in enumerate(lines[1:], start=1):
+        if line == "---":
+            closing_index = index
+            break
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if ":" not in line:
+            raise ValueError(f"{skill_file}: invalid frontmatter line: {line!r}")
+        key, value = line.split(":", 1)
+        metadata[key.strip()] = value.strip().strip("'\"")
+
+    if closing_index is None:
+        raise ValueError(f"{skill_file}: YAML frontmatter is not closed")
+    return metadata
+
+
+def validate_skill_package(skill: SkillPackage) -> None:
+    skill_file = skill.path / "SKILL.md"
+    metadata = parse_skill_frontmatter(skill_file)
+
+    for field in ("name", "description"):
+        if field not in metadata:
+            raise ValueError(f"{skill_file}: missing required frontmatter field {field!r}")
+
+    frontmatter_name = metadata["name"]
+    description = metadata["description"]
+    if not SKILL_NAME_PATTERN.fullmatch(frontmatter_name):
+        raise ValueError(f"{skill_file}: invalid skill name {frontmatter_name!r}")
+    if len(frontmatter_name) > 64:
+        raise ValueError(f"{skill_file}: skill name must be 64 characters or fewer")
+    if frontmatter_name != skill.name:
+        raise ValueError(
+            f"{skill_file}: frontmatter name {frontmatter_name!r} does not match install name {skill.name!r}"
+        )
+    if not description.strip():
+        raise ValueError(f"{skill_file}: description must be non-empty")
+    if len(description) > 1024:
+        raise ValueError(f"{skill_file}: description must be 1024 characters or fewer")
+
+
+def validate_skill_packages(skills: list[SkillPackage]) -> None:
+    for skill in skills:
+        validate_skill_package(skill)
 
 
 def resolve_target_directory(target: str, project: Path | None = None) -> Path:
@@ -80,6 +141,7 @@ def install_skills(
 ) -> InstallResult:
     if mode not in MODES:
         raise ValueError(f"unsupported mode: {mode}")
+    validate_skill_packages(skills)
 
     messages: list[str] = []
     installed = 0

@@ -1,3 +1,8 @@
+---
+name: technical-book
+description: Use for math, algorithms, engineering, probability, statistics, ML, or software books with formal objects and methods.
+---
+
 # Technical Book Lens
 
 Use for math, algorithms, engineering, probability, statistics, ML, and software

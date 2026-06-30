@@ -1,3 +1,8 @@
+---
+name: book-revise
+description: Use after a Book Reader review has produced a revision plan that must be applied to the workspace.
+---
+
 # Book Revise
 
 Use this skill after a reviewer has produced

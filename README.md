@@ -79,7 +79,17 @@ python3 scripts/install_skills.py --target agents-project --project /path/to/pro
 By default the installer copies skill packages. Use `--mode symlink` for
 development installs and `--dry-run` to preview without writing.
 
-See `docs/INSTALL.md` for full install, verify, and uninstall instructions.
+Copying to `.opencode/skills/` is the filesystem install step. OpenCode native
+discovery is confirmed only when a new or restarted OpenCode session lists the
+skills in the native `skill` tool's `available_skills` section.
+
+If files exist but OpenCode does not list the skills, check that `SKILL.md` is
+uppercase, starts with YAML frontmatter, includes `name` and `description`,
+uses a `name` matching the installed directory, and is not hidden by
+`permission.skill` or disabled with `tools.skill: false` in OpenCode config.
+
+See `docs/INSTALL.md` for full install, native discovery verification,
+troubleshooting, and uninstall instructions.
 
 ## Intake CLI
 
@@ -131,6 +141,11 @@ Core skills:
 - `skills/book-reviewer/`: inference discipline audit
 - `skills/book-revise/`: review-driven revision protocol
 - `skills/lenses/`: optional reading lenses
+
+Lens skills are installed flat under the target skills directory. For example,
+`skills/lenses/technical-book/SKILL.md` installs as
+`.opencode/skills/technical-book/SKILL.md`, and its frontmatter name is
+`technical-book`.
 
 ## Method invariants
 

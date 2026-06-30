@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import importlib.util
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -472,6 +473,89 @@ The prose says decision-relevant evidence matters.
             self.assertNotIn("books", skill.path.parts)
             self.assertNotIn("workspaces", skill.path.parts)
 
+    def test_install_script_validates_all_skill_frontmatter(self) -> None:
+        installer = self.load_install_module()
+
+        skills = installer.discover_skills(ROOT)
+
+        self.assertEqual(len(skills), 13)
+        for skill in skills:
+            metadata = installer.parse_skill_frontmatter(skill.path / "SKILL.md")
+            self.assertEqual(metadata["name"], skill.name)
+            self.assertTrue(metadata["description"].strip())
+            self.assertLessEqual(len(metadata["description"]), 1024)
+
+    def test_install_script_rejects_invalid_skill_frontmatter(self) -> None:
+        installer = self.load_install_module()
+
+        cases = [
+            ("missing-frontmatter", "# Missing Frontmatter\n", "frontmatter"),
+            ("missing-name", "---\ndescription: Use when testing.\n---\n", "missing required frontmatter field 'name'"),
+            ("missing-description", "---\nname: missing-description\n---\n", "missing required frontmatter field 'description'"),
+            ("empty-description", "---\nname: empty-description\ndescription: \n---\n", "description must be non-empty"),
+            ("name-mismatch", "---\nname: other-name\ndescription: Use when testing.\n---\n", "does not match install name"),
+            ("illegal_name", "---\nname: illegal_name\ndescription: Use when testing.\n---\n", "invalid skill name"),
+        ]
+        for directory_name, content, expected_message in cases:
+            with self.subTest(directory_name=directory_name):
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    repo = Path(temporary_directory)
+                    self.write_skill(repo, directory_name, content)
+
+                    with self.assertRaises(ValueError) as error:
+                        installer.discover_skills(repo)
+
+                    self.assertIn(expected_message, str(error.exception))
+                    self.assertIn("SKILL.md", str(error.exception))
+
+    def test_install_script_rejects_missing_uppercase_skill_file(self) -> None:
+        installer = self.load_install_module()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            skill_directory = Path(temporary_directory) / "skills" / "lowercase-file"
+            skill_directory.mkdir(parents=True)
+            (skill_directory / "skill.md").write_text(
+                "---\nname: lowercase-file\ndescription: Use when testing.\n---\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(ValueError) as error:
+                installer.validate_skill_package(installer.SkillPackage(name="lowercase-file", path=skill_directory))
+
+            self.assertIn("SKILL.md not found", str(error.exception))
+
+    def test_install_script_dry_run_validates_skills_before_planning(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = Path(temporary_directory)
+            scripts = repo / "scripts"
+            scripts.mkdir(parents=True)
+            shutil.copy2(INSTALL_SCRIPT, scripts / "install_skills.py")
+            self.write_skill(
+                repo,
+                "broken-skill",
+                "---\nname: other-name\ndescription: Use when testing dry-run validation.\n---\n",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(scripts / "install_skills.py"),
+                    "--target",
+                    "opencode-project",
+                    "--project",
+                    str(repo),
+                    "--dry-run",
+                ],
+                cwd=repo,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("does not match install name", result.stderr)
+            self.assertIn("SKILL.md", result.stderr)
+
     def test_install_script_resolves_project_targets(self) -> None:
         installer = self.load_install_module()
 
@@ -570,6 +654,13 @@ The prose says decision-relevant evidence matters.
         (workspace / "README.md").write_text(readme, encoding="utf-8")
         dashboard = (workspace / "guide" / "dashboard.md").read_text("utf-8").replace("workspace stage: source-ready", "workspace stage: reconstructed")
         (workspace / "guide" / "dashboard.md").write_text(dashboard, encoding="utf-8")
+
+    def write_skill(self, repo: Path, name: str, content: str) -> Path:
+        skill_directory = repo / "skills" / name
+        skill_directory.mkdir(parents=True)
+        skill_file = skill_directory / "SKILL.md"
+        skill_file.write_text(content, encoding="utf-8")
+        return skill_file
 
     def load_install_module(self):
         spec = importlib.util.spec_from_file_location("install_skills", INSTALL_SCRIPT)

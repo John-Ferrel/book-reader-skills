@@ -1,3 +1,8 @@
+---
+name: book-reader
+description: Use when the user wants to read a book with the Book Reader workflow and needs routing across intake, reconstruction, review, revision, or lenses.
+---
+
 # Book Reader
 
 Book Reader is the orchestrator for an evidence-driven reading methodology.

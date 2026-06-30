@@ -1,3 +1,8 @@
+---
+name: nonfiction-argument
+description: Use for argumentative nonfiction, essays, polemics, history, social science, or management books focused on claims and warrants.
+---
+
 # Nonfiction Argument Lens
 
 Use for argumentative nonfiction, essays, polemics, history, social science,

@@ -1,3 +1,8 @@
+---
+name: edition-revision
+description: Use when a book has edition layers, prefaces, afterwords, appendices, translator notes, retrospectives, or visible self-correction.
+---
+
 # Edition / Revision Lens
 
 Use when the book contains original edition material, revised edition prefaces,

@@ -7,6 +7,10 @@ These are installed separately:
 - `scripts/install_skills.py` installs agent skills into an OpenCode or generic
   agent-compatible skills directory.
 
+Copying skill directories is only the filesystem install step. OpenCode native
+discovery happens when OpenCode loads valid `SKILL.md` files and lists them in
+the native `skill` tool's `available_skills` section.
+
 ## Quick install
 
 OpenCode global:
@@ -88,6 +92,8 @@ python3 scripts/install_skills.py --target opencode-global --dry-run
 
 ## Verify
 
+First verify the skill directories were copied.
+
 OpenCode global install:
 
 ```bash
@@ -118,6 +124,19 @@ Then try a skill prompt in an agent that supports this layout:
 用 book-reader 读 examples/sample-nonfiction.txt
 ```
 
+For OpenCode native discovery, start a new OpenCode session or restart the
+current one after installing. The native `skill` tool description should include
+an `available_skills` section with entries such as:
+
+```text
+book-reader
+book-intake
+technical-book
+```
+
+Filesystem visibility alone does not prove OpenCode has registered the skills
+for the active session.
+
 ## Installed skill names
 
 This repo installs the following skill package names:
@@ -142,6 +161,29 @@ example:
 ```text
 skills/lenses/technical-book/SKILL.md -> <target>/technical-book/SKILL.md
 ```
+
+Each installed `SKILL.md` starts with OpenCode-compatible YAML frontmatter. The
+frontmatter `name` must match the installed directory name, so flattened lens
+skills use names such as `technical-book`, not `lenses/technical-book`.
+
+## Troubleshooting OpenCode discovery
+
+If the directory exists but the skill does not appear in native
+`available_skills`, check:
+
+- `SKILL.md` is spelled exactly in uppercase.
+- `SKILL.md` starts with YAML frontmatter.
+- Frontmatter contains both `name` and `description`.
+- Frontmatter `name` equals the installed directory name.
+- `description` is non-empty.
+- A new or restarted OpenCode session is using the project where skills were
+  installed.
+- `opencode.jsonc`, `opencode.json`, or agent config does not set
+  `permission.skill` to `deny` for these names.
+- The agent has not disabled the native skill tool with `tools.skill: false`.
+
+Seeing files under `.opencode/skills/` means the copy step worked; it does not
+by itself confirm native skill discovery.
 
 ## Uninstall
 

@@ -1,3 +1,8 @@
+---
+name: fiction-narrative
+description: Use for novels, short stories, drama, or narrative fiction that needs character, scene, motif, theme, or style analysis.
+---
+
 # Fiction Narrative Lens
 
 Use for novels, short stories, drama, and narrative fiction.
